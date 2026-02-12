@@ -2,6 +2,7 @@ from fastapi import FastAPI, Depends
 from sqlalchemy.orm import Session
 import models, schemas, database
 from ai_processor import process_expense_text
+import pandas as pd
 
 app = FastAPI()
 
@@ -49,3 +50,20 @@ def create_expense_via_ai(text_input: str, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(db_expense)
     return {"message": "AI processed successfully", "data": db_expense}
+
+@app.get("/expenses/summary/")
+def get_summary(db: Session = Depends(get_db)):
+    # 1. دریافت همه داده‌ها از دیتابیس
+    expenses = db.query(models.Expense).all()
+    if not expenses:
+        return {"message": "No data available"}
+
+    # 2. تبدیل داده‌ها به یک DataFrame (ساختار دیتاساینسی)
+    df = pd.DataFrame([
+        {"category": e.category, "amount": e.amount} for e in expenses
+    ])
+
+    # 3. گروه‌بندی بر اساس دسته‌بندی و جمع مبالغ
+    summary = df.groupby("category")["amount"].sum().to_dict()
+    
+    return summary

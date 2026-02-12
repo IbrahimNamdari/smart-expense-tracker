@@ -24,3 +24,11 @@ def process_expense_text(text: str):
     clean_json = response.text.replace('```json', '').replace('```', '').strip()
     
     return json.loads(clean_json)
+
+def get_ai_insight(summary_data: dict):
+    prompt = f"Based on this spending data: {summary_data}, give a 1-sentence financial advice in English."
+    
+    # اینجا از همان مدلی که در مرحله قبل استفاده کردی (Gemini 2.0) استفاده کن
+    # خروجی یک جمله مشاوره باشد
+    response = model.generate_content(prompt) # فرض بر اینکه مدل را تعریف کردی
+    return response.text
