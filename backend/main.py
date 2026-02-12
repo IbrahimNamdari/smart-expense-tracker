@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Depends
 from sqlalchemy.orm import Session
 import models, schemas, database
+from ai_processor import process_expense_text
 
 app = FastAPI()
 
@@ -32,3 +33,19 @@ def create_expense(expense: schemas.ExpenseCreate, db: Session = Depends(get_db)
 @app.get("/expenses/")
 def read_expenses(db: Session = Depends(get_db)):
     return db.query(models.Expense).all()
+
+@app.post("/expenses/ai/")
+def create_expense_via_ai(text_input: str, db: Session = Depends(get_db)):
+    # 1. استفاده از هوش مصنوعی برای فهمیدن جزئیات
+    ai_data = process_expense_text(text_input)
+    
+    # 2. ذخیره در دیتابیس
+    db_expense = models.Expense(
+        title=ai_data['title'],
+        amount=ai_data['amount'],
+        category=ai_data['category']
+    )
+    db.add(db_expense)
+    db.commit()
+    db.refresh(db_expense)
+    return {"message": "AI processed successfully", "data": db_expense}
